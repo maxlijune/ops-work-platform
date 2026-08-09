@@ -1,0 +1,37 @@
+# === Backend (Python) ===
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# 数据与加密密钥（包含私密信息，严禁上传）
+backend/data/app.db
+backend/data/*.db
+backend/data/.encryption_key
+backend/data/encryption_key
+backend/data/**/*.db
+
+# 日志
+logs/
+*.log
+
+# === Frontend (Vue/Node) ===
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# === IDE / System ===
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# === Trae 临时包 ===
+.trae-html-share-packages/
