@@ -334,11 +334,20 @@ DELETE /api/v1/settings/docs/{id}
 
 ## 8. 启动与停止（日常使用）
 
-### 8.1 一键启动
+### 8.1 Linux / macOS 一键启动
 
 ```bash
 cd /path/to/ops-work-platform
 ./start.sh
+```
+
+### 8.2 Windows 一键启动
+
+```cmd
+:: 双击 start.bat 即可
+:: 或在命令行中运行
+cd C:\path\to\ops-work-platform
+start.bat
 ```
 
 启动顺序：
@@ -346,8 +355,11 @@ cd /path/to/ops-work-platform
 2. 前端 Vite Dev Server → 端口 `5173`
 3. 浏览器自动打开 `http://localhost:5173`
 
-### 8.2 单独启动
+> **Windows 首次运行**：`start.bat` 会自动创建 Python 虚拟环境并安装依赖，可能需要几分钟。
 
+### 8.3 单独启动
+
+**Linux / macOS:**
 ```bash
 # 仅后端
 cd backend && python -m app.main      # 或 ./backend/start.sh
@@ -356,8 +368,18 @@ cd backend && python -m app.main      # 或 ./backend/start.sh
 cd frontend && npm run dev            # 或 ./frontend/start.sh
 ```
 
-### 8.3 停止
+**Windows:**
+```cmd
+:: 仅后端
+cd backend && start.bat
 
+:: 仅前端
+cd frontend && start.bat
+```
+
+### 8.4 停止
+
+**Linux / macOS:**
 ```bash
 ./stop.sh
 # 或手动:
@@ -365,14 +387,34 @@ pkill -f "python -m app.main"
 pkill -f "vite"
 ```
 
-### 8.4 日常运维位置
+**Windows:**
+```cmd
+:: 双击 stop.bat 即可
+stop.bat
 
-| 内容 | 路径 |
-|------|------|
-| 数据库文件 | `backend/data/app.db`（定期备份它） |
-| 加密密钥 | `backend/data/.encryption_key`（同步备份，**丢了密码全废**） |
-| 后端日志 | `uvicorn stdout`（如需持久化可改 main.py 加文件日志） |
-| 前端日志 | 浏览器 Console / Vite stdout |
+:: 或手动关闭弹出窗口
+:: 或在任务管理器中结束 python.exe / node.exe
+```
+
+### 8.5 Windows 环境要求
+
+| 依赖 | 版本要求 | 下载地址 |
+|------|----------|----------|
+| Python | 3.10+ | https://www.python.org/downloads/ |
+| Node.js | 16+ | https://nodejs.org/ |
+| Git | 2.x（可选，用于克隆仓库） | https://git-scm.com/ |
+
+> Windows 安装 Python 时务必勾选 **"Add Python to PATH"**。
+
+### 8.6 日常运维位置
+
+| 内容 | Linux/macOS 路径 | Windows 路径 |
+|------|------------------|-------------|
+| 数据库文件 | `backend/data/app.db` | `backend\data\app.db` |
+| 加密密钥 | `backend/data/.encryption_key` | `backend\data\.encryption_key` |
+| Python 虚拟环境 | `backend/venv/` | `backend\venv\` |
+| 后端日志 | `uvicorn stdout` | 同左 |
+| 前端日志 | 浏览器 Console / Vite stdout | 同左 |
 
 ---
 
@@ -442,15 +484,19 @@ pkill -f "vite"
 
 | 现象 | 可能原因 | 快速处理 |
 |------|----------|----------|
-| 前端列表"获取失败" | 后端未启动 | `ps aux \| grep app.main`，没有就重新 `./start.sh` |
-| 前端访问 "后端服务无响应" | 端口 8000 不通 / Vite 代理失败 | 直接 `curl http://localhost:8000/api/v1/health` 验证后端 |
-| 后端启动报 `sqlite3 no such table` | app.db 为空且 `models` 未导入到 `main.py` 的建表流程 | 确认 `from app.models import server,database,...` 都在 `main.py` import 链上 |
-| 加解密失败 "InvalidToken" | 密钥文件被换/被删 | **没有办法恢复，只能重新录入所有服务器/数据库密码** |
+| 前端列表"获取失败" | 后端未启动 | Linux: `ps aux \| grep app.main`；Windows: 检查任务管理器 python.exe |
+| 前端访问 "后端服务无响应" | 端口 8000 不通 / Vite 代理失败 | `curl http://localhost:8000/api/v1/health` 验证后端 |
+| 后端启动报 `sqlite3 no such table` | app.db 为空且 `models` 未导入到 `main.py` | 确认 `from app.models import server,database,...` 在 `main.py` import 链上 |
+| 加解密失败 "InvalidToken" | 密钥文件被换/被删 | **无法恢复，只能重新录入所有密码** |
 | 服务器/数据库密码解密为空 | 新建时没传密码 / 解密异常被吞 | 重新编辑保存密码 |
 | git push 报 443 连不上 | 本机/环境代理策略 | 检查 `.gitconfig` 代理，或切换 SSH URL 推送 |
-| npm install 卡住 | 国内源问题 | 加 `--registry https://registry.npmmirror.com` 或写 `.npmrc` |
+| npm install 卡住 | 国内源问题 | `--registry https://registry.npmmirror.com` 或写 `.npmrc` |
 | pip install 卡住 | 同上 | `-i https://pypi.tuna.tsinghua.edu.cn/simple` |
-| UI 色调不对（冷蓝色系） | Tailwind + Element Plus 自定义颜色被覆盖 | 检查 `tailwind.config.js` 与 `style.css` 是否存在、导入顺序 |
+| UI 色调不对（冷蓝色系） | Tailwind + Element Plus 自定义颜色被覆盖 | 检查 `tailwind.config.js` 与 `style.css` 导入顺序 |
+| **Windows: `'python' 不是内部命令`** | Python 未加入 PATH | 重装 Python 勾选 "Add to PATH"，或手动加入系统环境变量 |
+| **Windows: `start.bat` 闪退** | 编码或命令错误 | 右键用"编辑"打开查看报错，或在 cmd 中手动执行定位 |
+| **Windows: 端口被占用 8000/5173** | 上次未正常停止 | `stop.bat` 或 `netstat -aon \| findstr :8000` 找 PID 后 `taskkill /pid PID /f` |
+| **Windows: psycopg2 安装失败** | 缺少 C 编译器 | 使用 `psycopg2-binary`（已在 requirements.txt 中），或装 Visual Studio Build Tools |
 
 ---
 
