@@ -232,11 +232,6 @@ aside ::-webkit-scrollbar-thumb:hover { background: #484F58; }
   margin: 0 4px;
 }
 
-/* Layout gap between sidebar and main content */
-aside {
-  margin-right: 4px;
-}
-
 /* Sidebar menu item hover */
 aside .router-link-active,
 aside .router-link-active:hover {

@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-screen bg-bg-main">
+  <div class="flex h-screen bg-bg-main gap-3">
     <!-- Sidebar - GitHub-inspired dark sidebar -->
     <aside class="bg-bg-sidebar text-gray-300 flex flex-col transition-all duration-200 shadow-lg shadow-black/20 z-10" :class="sidebarCollapsed ? 'w-16' : 'w-60'">
       <!-- Logo / Brand -->
