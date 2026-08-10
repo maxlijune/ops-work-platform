@@ -7,24 +7,27 @@ export default {
   theme: {
     extend: {
       colors: {
-        'primary': '#7A8B6F',
-        'primary-dark': '#5F6E54',
-        'primary-light': '#96A58B',
-        'bg-main': '#F3EDE4',
-        'bg-sidebar': '#2B2B2B',
-        'bg-sidebar-hover': '#3A3A3A',
-        'bg-sidebar-active': '#4A5A40',
-        'text-main': '#2B2B2B',
-        'text-secondary': '#6B6B6B',
-        'warning': '#E8B923',
-        'danger': '#C44536',
-        'success': '#7A8B6F',
+        // GitHub-inspired palette (warm overlay)
+        'primary': '#0969DA',
+        'primary-dark': '#0550AE',
+        'primary-light': '#218BFF',
+        'bg-main': '#F6F8FA',
+        'bg-sidebar': '#0D1117',
+        'bg-sidebar-hover': '#1C2128',
+        'bg-sidebar-active': '#1F6FEB',
+        'text-main': '#1F2328',
+        'text-secondary': '#656D76',
+        'warning': '#BF8700',
+        'danger': '#CF222E',
+        'success': '#1A7F37',
         'card-bg': '#FFFFFF',
-        'border-light': '#E5E0D8'
+        'border-light': '#D0D7DE',
+        'border-dark': '#30363D',
       },
       fontFamily: {
-        'sans': ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif']
-      }
+        'sans': ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        'mono': ['ui-monospace', 'SFMono-Regular', 'SF Mono', 'Menlo', 'Consolas', 'monospace'],
+      },
     },
   },
   plugins: [],

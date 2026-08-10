@@ -1,81 +1,94 @@
 <template>
   <div class="space-y-4">
-    <!-- Toolbar -->
-    <div class="flex justify-between items-center">
-      <div class="flex space-x-2">
-        <el-button type="primary" @click="openCreateDialog">
-          <el-icon><Plus /></el-icon> 新增服务器
-        </el-button>
-        <el-button @click="fetchServers">
-          <el-icon><Refresh /></el-icon> 手动采集
-        </el-button>
-      </div>
-      <div class="flex items-center space-x-2">
-        <el-input v-model="searchQuery" placeholder="搜索服务器..." style="width: 200px" :prefix-icon="Search" />
-        <el-select v-model="filterStatus" placeholder="状态" clearable style="width: 120px">
-          <el-option label="在线" value="online" />
-          <el-option label="离线" value="offline" />
-          <el-option label="异常" value="error" />
-        </el-select>
-      </div>
+    <!-- Toolbar (compact, single row) -->
+    <div class="flex items-center gap-2 flex-wrap">
+      <el-button type="primary" @click="openCreateDialog">
+        <el-icon><Plus /></el-icon> 新增服务器
+      </el-button>
+      <el-button @click="fetchServers">
+        <el-icon><Refresh /></el-icon> 手动采集
+      </el-button>
+      <div class="flex-1"></div>
+      <el-input v-model="searchQuery" placeholder="搜索名称/IP..." style="width: 200px" clearable>
+        <template #prefix>
+          <el-icon><Search /></el-icon>
+        </template>
+      </el-input>
+      <el-select v-model="filterStatus" placeholder="状态" clearable style="width: 110px">
+        <el-option label="在线" value="online" />
+        <el-option label="离线" value="offline" />
+        <el-option label="异常" value="error" />
+      </el-select>
     </div>
 
     <!-- Server Table -->
     <el-card>
       <el-table :data="filteredServers" style="width: 100%" v-loading="loading">
-        <el-table-column prop="name" label="名称" width="150" />
-        <el-table-column prop="ip" label="IP地址" width="140" />
-        <el-table-column prop="os_type" label="操作系统" width="100" />
-        <el-table-column prop="cpu_usage" label="CPU" width="100">
+        <!-- 服务器 (name + IP) -->
+        <el-table-column label="服务器" min-width="170">
           <template #default="{ row }">
-            <div class="flex items-center">
-              <el-progress
-                :percentage="row.cpu_usage || 0"
-                :color="getMeterColor(row.cpu_usage)"
-                :stroke-width="10"
-                style="width: 80px"
-              />
+            <div class="flex flex-col leading-tight">
+              <span class="font-semibold text-gray-800">{{ row.name || '-' }}</span>
+              <span class="text-xs text-gray-400">{{ row.ip || '-' }}</span>
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="memory_usage" label="内存" width="100">
+
+        <!-- 操作系统 -->
+        <el-table-column label="操作系统" min-width="100">
           <template #default="{ row }">
-            <el-progress
-              :percentage="row.memory_usage || 0"
-              :color="getMeterColor(row.memory_usage)"
-              :stroke-width="10"
-              style="width: 80px"
-            />
+            <el-tag size="small" type="info" effect="plain">{{ row.os_type || '-' }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="disk_usage" label="磁盘" width="100">
+
+        <!-- 资源使用 (CPU/内存/磁盘) -->
+        <el-table-column label="资源使用" min-width="230">
           <template #default="{ row }">
-            <el-progress
-              :percentage="row.disk_usage || 0"
-              :color="getMeterColor(row.disk_usage)"
-              :stroke-width="10"
-              style="width: 80px"
-            />
+            <div class="flex flex-col gap-1.5 py-1">
+              <div v-for="item in resourceItems(row)" :key="item.key" class="flex items-center gap-2">
+                <span class="text-xs text-gray-500" style="width: 28px;">{{ item.label }}</span>
+                <div class="flex-1 bg-gray-100 rounded-full overflow-hidden" style="height: 6px;">
+                  <div class="h-full rounded-full transition-all duration-300" :style="{ width: (item.value || 0) + '%', backgroundColor: item.color }"></div>
+                </div>
+                <span class="text-xs font-medium text-right" :style="{ width: '32px', color: item.color }">{{ Math.round(item.value || 0) }}%</span>
+              </div>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
+
+        <!-- 状态 -->
+        <el-table-column label="状态" min-width="90">
           <template #default="{ row }">
-            <el-tag :type="row.status === 'online' ? 'success' : row.status === 'warning' ? 'warning' : 'danger'" size="small">
-              {{ row.status || 'unknown' }}
-            </el-tag>
+            <div class="flex items-center gap-1.5">
+              <span class="inline-block rounded-full" :style="{ width: '8px', height: '8px', backgroundColor: getStatusColor(row.status) }"></span>
+              <span class="text-sm">{{ getStatusText(row.status) }}</span>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column prop="updated_at" label="上次采集" width="160">
+
+        <!-- 上次采集 (relative) -->
+        <el-table-column label="上次采集" min-width="110">
           <template #default="{ row }">
-            {{ formatTime(row.updated_at) }}
+            <span class="text-sm text-gray-600">{{ formatRelativeTime(row.updated_at) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+
+        <!-- 操作 -->
+        <el-table-column label="操作" width="80" fixed="right" align="right">
           <template #default="{ row }">
-            <el-button size="small" link @click="viewDetail(row)">详情</el-button>
-            <el-button size="small" link @click="editServer(row)">编辑</el-button>
-            <el-button size="small" link @click="testConnection(row)">测试</el-button>
-            <el-button size="small" link type="danger" @click="deleteServer(row)">删除</el-button>
+            <el-dropdown trigger="click" @command="(cmd) => handleAction(cmd, row)">
+              <el-button size="small" link class="!px-1.5 text-gray-500 hover:text-primary">
+                <el-icon><MoreFilled /></el-icon>
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="detail"><el-icon><View /></el-icon>详情</el-dropdown-item>
+                  <el-dropdown-item command="edit"><el-icon><Edit /></el-icon>编辑</el-dropdown-item>
+                  <el-dropdown-item command="test"><el-icon><Connection /></el-icon>测试连接</el-dropdown-item>
+                  <el-dropdown-item divided command="delete" style="color: var(--el-color-danger)"><el-icon><Delete /></el-icon>删除</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </template>
         </el-table-column>
       </el-table>
@@ -122,15 +135,15 @@
         <div class="grid grid-cols-4 gap-4">
           <div class="bg-gray-50 p-4 rounded text-center">
             <p class="text-text-secondary text-xs">CPU</p>
-            <p class="text-xl font-bold text-primary">{{ detailServer.cpu_usage || 0 }}%</p>
+            <p class="text-xl font-bold" :style="{ color: getMeterColor(detailServer.cpu_usage) }">{{ detailServer.cpu_usage || 0 }}%</p>
           </div>
           <div class="bg-gray-50 p-4 rounded text-center">
             <p class="text-text-secondary text-xs">内存</p>
-            <p class="text-xl font-bold text-primary">{{ detailServer.memory_usage || 0 }}%</p>
+            <p class="text-xl font-bold" :style="{ color: getMeterColor(detailServer.memory_usage) }">{{ detailServer.memory_usage || 0 }}%</p>
           </div>
           <div class="bg-gray-50 p-4 rounded text-center">
             <p class="text-text-secondary text-xs">磁盘</p>
-            <p class="text-xl font-bold text-primary">{{ detailServer.disk_usage || 0 }}%</p>
+            <p class="text-xl font-bold" :style="{ color: getMeterColor(detailServer.disk_usage) }">{{ detailServer.disk_usage || 0 }}%</p>
           </div>
           <div class="bg-gray-50 p-4 rounded text-center">
             <p class="text-text-secondary text-xs">负载</p>
@@ -241,6 +254,15 @@ const saveServer = async () => {
   }
 }
 
+const handleAction = (cmd, row) => {
+  switch (cmd) {
+    case 'detail': viewDetail(row); break
+    case 'edit': editServer(row); break
+    case 'test': testConnection(row); break
+    case 'delete': deleteServer(row); break
+  }
+}
+
 const deleteServer = async (server) => {
   try {
     await ElMessageBox.confirm(`确定删除服务器 "${server.name}" 吗？`, '确认删除', { type: 'warning' })
@@ -284,9 +306,48 @@ const getMeterColor = (value) => {
   return '#7A8B6F'
 }
 
+const resourceItems = (row) => [
+  { key: 'cpu', label: 'CPU', value: row.cpu_usage || 0, color: getMeterColor(row.cpu_usage) },
+  { key: 'memory', label: '内存', value: row.memory_usage || 0, color: getMeterColor(row.memory_usage) },
+  { key: 'disk', label: '磁盘', value: row.disk_usage || 0, color: getMeterColor(row.disk_usage) }
+]
+
+const getStatusColor = (status) => {
+  const map = {
+    online: '#67C23A',
+    offline: '#909399',
+    warning: '#E6A23C',
+    error: '#F56C6C'
+  }
+  return map[status] || '#909399'
+}
+
+const getStatusText = (status) => {
+  const map = {
+    online: '在线',
+    offline: '离线',
+    warning: '异常',
+    error: '异常'
+  }
+  return map[status] || '未知'
+}
+
 const formatTime = (timeStr) => {
   if (!timeStr) return '-'
   return new Date(timeStr).toLocaleString('zh-CN')
+}
+
+const formatRelativeTime = (timeStr) => {
+  if (!timeStr) return '-'
+  const date = new Date(timeStr)
+  if (isNaN(date.getTime())) return '-'
+  const diffSec = Math.floor((Date.now() - date.getTime()) / 1000)
+  if (diffSec < 0) return formatTime(timeStr)
+  if (diffSec < 60) return `${diffSec}秒前`
+  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}分钟前`
+  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}小时前`
+  if (diffSec < 2592000) return `${Math.floor(diffSec / 86400)}天前`
+  return formatTime(timeStr)
 }
 
 onMounted(fetchServers)

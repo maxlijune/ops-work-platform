@@ -45,32 +45,67 @@
       <!-- Documentation -->
       <el-tab-pane label="资料库" name="docs">
         <div class="grid grid-cols-12 gap-4">
-          <div class="col-span-3 bg-white rounded-lg p-3">
-            <h4 class="font-semibold mb-2 text-sm">文档分类</h4>
-            <el-tree :data="docCategories" node-key="id" :props="{ label: 'name', children: 'children' }" @node-click="handleCategoryClick" />
+          <!-- Left: Category Tree + Document List -->
+          <div class="col-span-4 bg-white rounded-lg p-3 flex flex-col" style="height: 72vh">
+            <div class="flex justify-between items-center mb-2">
+              <h4 class="font-semibold text-sm">文档分类</h4>
+              <el-button size="small" type="primary" @click="openCreateDialog">
+                <el-icon><Plus /></el-icon> 新建文档
+              </el-button>
+            </div>
+            <el-tree
+              :data="docCategories"
+              node-key="id"
+              :props="{ label: 'name' }"
+              :highlight-current="true"
+              :default-expand-all="true"
+              :current-node-key="selectedCategory"
+              @node-click="handleCategoryClick"
+            />
+            <div class="mt-3 border-t border-gray-200 pt-2 flex-1 overflow-y-auto">
+              <h4 class="font-semibold text-sm mb-2 text-text-secondary">文档列表</h4>
+              <div v-if="filteredDocs.length === 0" class="text-center py-6 text-text-secondary text-sm">
+                暂无文档
+              </div>
+              <div
+                v-for="doc in filteredDocs"
+                :key="doc.id"
+                class="p-2 border-b border-gray-100 cursor-pointer hover:bg-gray-50 rounded"
+                :class="{ 'bg-primary/10': currentDoc?.id === doc.id }"
+                @click="selectDoc(doc)"
+              >
+                <div class="flex justify-between items-start gap-2">
+                  <span class="font-medium text-sm truncate">{{ doc.title }}</span>
+                  <el-tag size="small" type="info">{{ doc.category }}</el-tag>
+                </div>
+                <p class="text-xs text-text-secondary mt-1 line-clamp-1">{{ doc.content || '（空文档）' }}</p>
+              </div>
+            </div>
           </div>
-          <div class="col-span-9 bg-white rounded-lg p-4">
-            <div v-if="currentDoc" class="space-y-4">
-              <div class="flex justify-between items-center">
-                <h3 class="text-lg font-semibold">{{ currentDoc.title }}</h3>
+
+          <!-- Right: Document Preview -->
+          <div class="col-span-8 bg-white rounded-lg p-4" style="height: 72vh">
+            <div v-if="currentDoc" class="flex flex-col h-full">
+              <div class="flex justify-between items-start mb-3">
+                <div>
+                  <h3 class="text-lg font-semibold">{{ currentDoc.title }}</h3>
+                  <div class="flex items-center gap-2 mt-1">
+                    <el-tag size="small" type="info">{{ currentDoc.category }}</el-tag>
+                    <span class="text-xs text-text-secondary">{{ formatTime(currentDoc.updated_at) }}</span>
+                  </div>
+                </div>
                 <div class="space-x-2">
-                  <el-button size="small" @click="editDocMode = !editDocMode">{{ editDocMode ? '预览' : '编辑' }}</el-button>
-                  <el-button size="small" type="primary" @click="saveDoc">保存</el-button>
+                  <el-button size="small" @click="openEditDialog(currentDoc)">编辑</el-button>
                   <el-button size="small" type="danger" @click="deleteDoc(currentDoc)">删除</el-button>
                 </div>
               </div>
-              <div v-if="editDocMode">
-                <el-input v-model="docForm.title" placeholder="文档标题" class="mb-3" />
-                <el-input v-model="docForm.content" type="textarea" :rows="20" placeholder="Markdown 内容..." />
-              </div>
-              <div v-else class="prose max-w-none">
-                <pre class="bg-gray-50 p-4 rounded whitespace-pre-wrap">{{ currentDoc.content }}</pre>
-              </div>
+              <pre class="bg-gray-50 p-4 rounded text-sm font-mono overflow-auto whitespace-pre-wrap flex-1 m-0">{{ currentDoc.content || '（无内容）' }}</pre>
             </div>
-            <div v-else class="text-center py-8 text-text-secondary">
-              <el-icon class="text-4xl mb-2"><Document /></el-icon>
-              <p>选择或创建文档开始编辑</p>
-              <el-button type="primary" class="mt-4" @click="createDoc">新建文档</el-button>
+            <div v-else class="h-full flex items-center justify-center text-text-secondary">
+              <div class="text-center">
+                <el-icon class="text-4xl mb-2"><Document /></el-icon>
+                <p>从左侧选择文档查看内容，或点击“新建文档”</p>
+              </div>
             </div>
           </div>
         </div>
@@ -146,6 +181,34 @@
       </el-tab-pane>
     </el-tabs>
 
+    <!-- Create / Edit Document Dialog -->
+    <el-dialog v-model="docDialogVisible" :title="docDialogMode === 'create' ? '新建文档' : '编辑文档'" width="720px" :close-on-click-modal="false">
+      <el-form :model="docForm" label-width="80px">
+        <el-form-item label="标题">
+          <el-input v-model="docForm.title" placeholder="请输入文档标题" maxlength="200" show-word-limit />
+        </el-form-item>
+        <el-form-item label="分类">
+          <el-select v-model="docForm.category" placeholder="请选择分类" style="width: 220px">
+            <el-option v-for="cat in categoryOptions" :key="cat" :label="cat" :value="cat" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="内容">
+          <el-input
+            v-model="docForm.content"
+            type="textarea"
+            :rows="18"
+            placeholder="请输入 Markdown 内容..."
+            resize="vertical"
+            :input-style="{ fontFamily: 'monospace', fontSize: '14px' }"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="docDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="docSaving" @click="saveDoc">保存</el-button>
+      </template>
+    </el-dialog>
+
     <!-- Import Dialog -->
     <el-dialog v-model="showImportDialog" title="导入数据" width="400px">
       <el-upload
@@ -169,15 +232,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from 'axios'
 
 const activeTab = ref('global')
 const showImportDialog = ref(false)
-const currentDoc = ref(null)
-const editDocMode = ref(false)
-const docForm = ref({ title: '', content: '' })
 const importFile = ref(null)
 
 const settingsForm = ref({
@@ -189,13 +249,32 @@ const settingsForm = ref({
   data_path: 'local'
 })
 
+const systemLogs = ref([])
+
+// ---- Documentation ----
+const categoryOptions = ['运维文档', '操作手册', '知识积累', '自定义']
+
 const docCategories = ref([
-  { id: 1, name: '运维文档', children: [{ id: 11, name: '常用命令' }, { id: 12, name: '故障排查' }] },
-  { id: 2, name: '操作手册', children: [{ id: 21, name: '部署流程' }] },
-  { id: 3, name: '知识积累', children: [] }
+  { id: 'all', name: '全部文档' },
+  { id: '运维文档', name: '运维文档' },
+  { id: '操作手册', name: '操作手册' },
+  { id: '知识积累', name: '知识积累' },
+  { id: '自定义', name: '自定义' }
 ])
 
-const systemLogs = ref([])
+const docs = ref([])
+const currentDoc = ref(null)
+const selectedCategory = ref('all')
+
+const docDialogVisible = ref(false)
+const docDialogMode = ref('create')
+const docSaving = ref(false)
+const docForm = ref({ title: '', category: '运维文档', content: '' })
+
+const filteredDocs = computed(() => {
+  if (!selectedCategory.value || selectedCategory.value === 'all') return docs.value
+  return docs.value.filter(d => d.category === selectedCategory.value)
+})
 
 const fetchSettings = async () => {
   try {
@@ -211,31 +290,97 @@ const saveSettings = async () => {
   } catch (e) { ElMessage.error('保存失败') }
 }
 
-const handleCategoryClick = (node) => {
-  currentDoc.value = null
+const fetchDocs = async () => {
+  try {
+    const res = await axios.get('/api/v1/settings/docs')
+    if (res.data.code === 0) docs.value = res.data.data || []
+  } catch (e) { console.error(e) }
 }
 
-const createDoc = () => {
-  currentDoc.value = null
-  editDocMode.value = true
-  docForm.value = { title: '新文档', content: '' }
+const handleCategoryClick = (node) => {
+  selectedCategory.value = node.id
+}
+
+const selectDoc = (doc) => {
+  currentDoc.value = doc
+}
+
+const openCreateDialog = () => {
+  docDialogMode.value = 'create'
+  const initCategory = (categoryOptions.includes(selectedCategory.value)) ? selectedCategory.value : '运维文档'
+  docForm.value = { title: '', category: initCategory, content: '' }
+  docDialogVisible.value = true
+}
+
+const openEditDialog = (doc) => {
+  docDialogMode.value = 'edit'
+  currentDoc.value = doc
+  docForm.value = {
+    title: doc.title || '',
+    category: categoryOptions.includes(doc.category) ? doc.category : '自定义',
+    content: doc.content || ''
+  }
+  docDialogVisible.value = true
 }
 
 const saveDoc = async () => {
+  if (!docForm.value.title.trim()) {
+    ElMessage.warning('请输入文档标题')
+    return
+  }
+  docSaving.value = true
   try {
-    const res = await axios.post('/api/v1/settings/docs', docForm.value)
-    ElMessage.success('文档已保存')
-    editDocMode.value = false
-  } catch (e) { ElMessage.error('保存失败') }
+    const payload = {
+      title: docForm.value.title.trim(),
+      category: docForm.value.category || '自定义',
+      content: docForm.value.content
+    }
+    if (docDialogMode.value === 'create') {
+      const res = await axios.post('/api/v1/settings/docs', payload)
+      if (res.data.code === 0) {
+        ElMessage.success('文档已创建')
+        docDialogVisible.value = false
+        await fetchDocs()
+        if (res.data.data?.id) {
+          const created = docs.value.find(d => d.id === res.data.data.id)
+          if (created) currentDoc.value = created
+        }
+      } else {
+        ElMessage.error(res.data.message || '创建失败')
+      }
+    } else {
+      const res = await axios.put(`/api/v1/settings/docs/${currentDoc.value.id}`, payload)
+      if (res.data.code === 0) {
+        ElMessage.success('文档已更新')
+        docDialogVisible.value = false
+        await fetchDocs()
+        const updated = docs.value.find(d => d.id === currentDoc.value.id)
+        if (updated) currentDoc.value = updated
+      } else {
+        ElMessage.error(res.data.message || '更新失败')
+      }
+    }
+  } catch (e) {
+    ElMessage.error('保存失败')
+  } finally {
+    docSaving.value = false
+  }
 }
 
 const deleteDoc = async (doc) => {
   try {
     await ElMessageBox.confirm(`确定删除 "${doc.title}" 吗？`, '确认', { type: 'warning' })
-    await axios.delete(`/api/v1/settings/docs/${doc.id}`)
-    ElMessage.success('删除成功')
-    currentDoc.value = null
-  } catch (e) { if (e !== 'cancel') ElMessage.error('删除失败') }
+    const res = await axios.delete(`/api/v1/settings/docs/${doc.id}`)
+    if (res.data.code === 0) {
+      ElMessage.success('删除成功')
+      if (currentDoc.value?.id === doc.id) currentDoc.value = null
+      fetchDocs()
+    } else {
+      ElMessage.error(res.data.message || '删除失败')
+    }
+  } catch (e) {
+    if (e !== 'cancel') ElMessage.error('删除失败')
+  }
 }
 
 const exportData = async () => {
@@ -270,5 +415,9 @@ const clearAllData = async () => {
 
 const formatTime = (t) => t ? new Date(t).toLocaleString('zh-CN') : '-'
 
-onMounted(() => { fetchSettings(); systemLogs.value = [] })
+onMounted(() => {
+  fetchSettings()
+  fetchDocs()
+  systemLogs.value = []
+})
 </script>

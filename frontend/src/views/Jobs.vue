@@ -27,12 +27,21 @@
                 <el-switch v-model="row.enabled" @change="toggleJob(row)" size="small" />
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="200" fixed="right">
+            <el-table-column label="操作" width="80" fixed="right" align="right">
               <template #default="{ row }">
-                <el-button size="small" link @click="runJob(row)">立即运行</el-button>
-                <el-button size="small" link @click="viewHistory(row)">历史</el-button>
-                <el-button size="small" link @click="editJob(row)">编辑</el-button>
-                <el-button size="small" link type="danger" @click="deleteJob(row)">删除</el-button>
+                <el-dropdown trigger="click" @command="(cmd) => handleAction(cmd, row)">
+                  <el-button size="small" link class="!px-1.5 text-gray-500 hover:text-primary">
+                    <el-icon><MoreFilled /></el-icon>
+                  </el-button>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item command="run"><el-icon><VideoPlay /></el-icon>立即运行</el-dropdown-item>
+                      <el-dropdown-item command="history"><el-icon><Clock /></el-icon>历史记录</el-dropdown-item>
+                      <el-dropdown-item command="edit"><el-icon><Edit /></el-icon>编辑</el-dropdown-item>
+                      <el-dropdown-item divided command="delete" style="color: var(--el-color-danger)"><el-icon><Delete /></el-icon>删除</el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
               </template>
             </el-table-column>
           </el-table>
@@ -182,6 +191,15 @@ const saveJob = async () => {
     }
     showDialog.value = false; fetchJobs()
   } catch (e) { ElMessage.error('保存失败') }
+}
+
+const handleAction = (cmd, row) => {
+  switch (cmd) {
+    case 'run': runJob(row); break
+    case 'history': viewHistory(row); break
+    case 'edit': editJob(row); break
+    case 'delete': deleteJob(row); break
+  }
 }
 
 const deleteJob = async (job) => {
