@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DBA 运维工作台 · 迭代交付报告 0.0.1.202609111236</title>
+<style>
+  :root{
+    --accent:#2f6bff; --accent-dark:#1f56e0; --rail:#1a212c; --bg:#f5f6fa;
+    --card:#fff; --border:#e7e9ef; --text:#1f2329; --sub:#5c6572;
+    --ok:#16a34a; --warn:#f59e0b; --danger:#ef4444;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{background:var(--bg); color:var(--text); font-family:-apple-system,"PingFang SC",BlinkMacSystemFont,"Microsoft YaHei",sans-serif; line-height:1.6; padding:32px 16px 64px}
+  .wrap{max-width:980px; margin:0 auto}
+  .hero{background:linear-gradient(135deg,#223047,#2f6bff); color:#fff; border-radius:14px; padding:28px 30px; margin-bottom:24px}
+  .hero h1{font-size:22px; font-weight:700; letter-spacing:.3px}
+  .hero .sub{margin-top:6px; color:#cfe0ff; font-size:13px}
+  .hero .ver{display:inline-block; margin-top:14px; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.28); padding:4px 12px; border-radius:20px; font-size:12.5px; font-weight:600}
+  .grid{display:grid; gap:16px}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px 22px}
+  .card h2{font-size:16px; margin-bottom:14px; display:flex; align-items:center; gap:8px}
+  .card h2::before{content:''; width:4px; height:16px; border-radius:2px; background:var(--accent)}
+  .kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:16px}
+  .kpi{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px}
+  .kpi .n{font-size:26px; font-weight:700; color:var(--accent)}
+  .kpi .l{font-size:12.5px; color:var(--sub); margin-top:2px}
+  table{width:100%; border-collapse:collapse; font-size:13px}
+  th,td{text-align:left; padding:8px 10px; border-bottom:1px solid var(--border)}
+  th{color:var(--sub); font-weight:600; font-size:12px}
+  .tag{display:inline-block; padding:2px 9px; border-radius:12px; font-size:11.5px; font-weight:600}
+  .tag.done{background:#e8f7ee; color:var(--ok)}
+  .tag.todo{background:#fef1e0; color:var(--warn)}
+  .dot{display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; vertical-align:middle}
+  .ok{background:var(--ok)} .warn{background:var(--warn)} .danger{background:var(--danger)}
+  .mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace; font-size:12.5px; background:#f1f3f8; border:1px solid var(--border); border-radius:6px; padding:12px 14px; overflow:auto; color:#2a3340}
+  ul.clean{list-style:none}
+  ul.clean li{padding:6px 0 6px 22px; position:relative; font-size:13.5px}
+  ul.clean li::before{content:''; position:absolute; left:4px; top:13px; width:7px; height:7px; border-radius:2px; background:var(--accent)}
+  .foot{margin-top:24px; text-align:center; color:var(--sub); font-size:12.5px}
+  @media(max-width:640px){ .hero{padding:22px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <h1>DBA 运维工作台 · 迭代交付报告</h1>
+    <div class="sub">面向 DBA 日常工作（数据库维护 / 数据筛查 / DSG 同步运维）的一体化桌面工具</div>
+    <span class="ver">版本 0.0.1.202609111236</span>
+    <span class="ver">UI 风格：企业微信 PC</span>
+    <span class="ver">平台：Windows · Electron</span>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="n">6</div><div class="l">主功能模块</div></div>
+    <div class="kpi"><div class="n">8</div><div class="l">IPC 通道组</div></div>
+    <div class="kpi"><div class="n">30+</div><div class="l">IPC 接口</div></div>
+    <div class="kpi"><div class="n">2</div><div class="l">内置驱动插件</div></div>
+    <div class="kpi"><div class="n">0</div><div class="l">浏览器 Console 报错</div></div>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1fr 1fr">
+    <div class="card">
+      <h2>技术栈</h2>
+      <ul class="clean">
+        <li>Electron 31 + Vue 3 + TypeScript</li>
+        <li>electron-vite 构建 · preload 安全桥</li>
+        <li>主进程：Node.js + SQLite（better-sqlite3）</li>
+        <li>插件化驱动框架（内置 Oracle / MySQL，可装卸）</li>
+        <li>exceljs 流式导出（10 万行级不阻塞 UI）</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>版本信息</h2>
+      <div class="mono" style="white-space:normal">
+        appId: cn.maxlijune.ops-wrk-platform<br>
+        name: ops-wrk-platform<br>
+        version: 0.0.1.202609111236<br>
+        main: out/main/index.js
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>本次迭代功能清单</h2>
+    <table>
+      <thead><tr><th style="width:180px">模块</th><th>说明</th><th style="width:80px">状态</th></tr></thead>
+      <tbody>
+        <tr><td>监控看板</td><td>表空间容量监控、数据文件明细、手动扩容、分区健康检查 + 预警</td><td><span class="tag done">已完成</span></td></tr>
+        <tr><td>实例台账</td><td>实例分组管理、搜索过滤、连接测试（在线/离线/延迟展示）</td><td><span class="tag done">已完成</span></td></tr>
+        <tr><td>SQL 模板库</td><td>模板分类/标签、参数化查询、版本历史与回滚</td><td><span class="tag done">已完成</span></td></tr>
+        <tr><td>查询与导出</td><td>只读守卫拦截写操作、流式导出 Excel / CSV（十万行级）</td><td><span class="tag done">已完成</span></td></tr>
+        <tr><td>快速导航</td><td>URL / 文件夹 / 文件 / 应用快捷入口（集成于看板）</td><td><span class="tag done">已完成</span></td></tr>
+        <tr><td>插件管理</td><td>驱动插件装卸与启停、能力位声明、内置驱动</td><td><span class="tag done">已完成</span></td></tr>
+        <tr><td>操作日志 / 设置</td><td>审计日志、应用信息与 v0.0.1 基础设置</td><td><span class="tag done">已完成</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>UI 验收结果（浏览器 · 企业微信 PC 风格）</h2>
+    <table>
+      <thead><tr><th style="width:200px">验收项</th><th>结果</th></tr></thead>
+      <tbody>
+        <tr><td>左栏竖排导航（rail）渲染</td><td><span class="dot ok"></span><span class="tag done">通过</span> 深蓝黑 rail + DB logo + 商务蓝高亮</td></tr>
+        <tr><td>监控看板（统计卡片 + 表空间表 + 危险高亮）</td><td><span class="dot ok"></span><span class="tag done">通过</span> 危险/警告行红/橙高亮正确</td></tr>
+        <tr><td>实例台账分组展示 / 连接测试 / 增删改</td><td><span class="dot ok"></span><span class="tag done">通过</span> 按生产/联调/测试分组</td></tr>
+        <tr><td>SQL 模板库 + 参数化查询区</td><td><span class="dot ok"></span><span class="tag done">通过</span> 模板列表 + 标题/分类/编辑器齐全</td></tr>
+        <tr><td>操作日志视图</td><td><span class="dot ok"></span><span class="tag done">通过</span> 时间/目标/动作/结果列完整</td></tr>
+        <tr><td>导航切换与交互一致性</td><td><span class="dot ok"></span><span class="tag done">通过</span> 各视图切换正常</td></tr>
+        <tr><td>浏览器 Console 无报错</td><td><span class="dot ok"></span><span class="tag done">通过</span> 0 条 uncaught error</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>工程质量</h2>
+    <table>
+      <thead><tr><th style="width:200px">检查项</th><th>结果</th></tr></thead>
+      <tbody>
+        <tr><td>主进程 TypeScript 编译</td><td><span class="dot ok"></span>通过（tsconfig.node.json）</td></tr>
+        <tr><td>渲染端 TypeScript 编译</td><td><span class="dot ok"></span>通过（tsconfig.web.json）</td></tr>
+        <tr><td>electron-vite 生产构建</td><td><span class="dot ok"></span>通过（main/preload/renderer 全部产出）</td></tr>
+        <tr><td>安全设计</td><td>SQL 只读守卫 + preload 白名单桥 + 错误装箱（__error）</td></tr>
+      </tbody>
+    </table>
+    <h2 style="margin-top:18px">构建 / 打包命令</h2>
+    <div class="mono">
+npm run dev        # 开发模式（HMR）<br>
+npm run typecheck  # 双端 TS 类型校验<br>
+npm run build      # electron-vite 生产构建<br>
+npm run pack:win   # electron-builder 打 Windows x64 安装包（nsis）
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>后续迭代建议</h2>
+    <ul class="clean">
+      <li>注册表/配置文件驱动的实例连接池，支持批量扩容与阈值告警推送</li>
+      <li>真实 Oracle（thick 模式 + Instant Client）与 MySQL 驱动落地替换桩驱动</li>
+      <li>DSG 同步运维专用模块（启停、日志抓取、初始化比对）</li>
+      <li>查询结果前端虚拟滚动，进一步支撑更大结果集</li>
+      <li>Windows 真机打包与安装包签名验证</li>
+    </ul>
+  </div>
+
+  <div class="foot">DBA 运维工作台 · 0.0.1.202609111236 · 交付报告生成于 2026-09-11</div>
+</div>
+</body>
+</html>

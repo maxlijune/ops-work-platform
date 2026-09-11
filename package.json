@@ -1,0 +1,36 @@
+{
+  "name": "ops-wrk-platform",
+  "version": "0.0.1.202609111236",
+  "description": "DBA 运维工作台（Windows 桌面端）",
+  "author": "maxlijune",
+  "license": "MIT",
+  "main": "out/main/index.js",
+  "private": true,
+  "scripts": {
+    "dev:renderer": "vite",
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+    "test": "vitest run",
+    "rebuild": "electron-rebuild -f -w better-sqlite3",
+    "pack:win": "electron-vite build && electron-builder --win --x64",
+    "pack:dir": "electron-vite build && electron-builder --dir",
+    "version": "0.0.1.202609111236"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@vitejs/plugin-vue": "^5.2.4",
+    "electron": "^31.3.1",
+    "electron-builder": "^24.13.3",
+    "electron-vite": "^2.3.0",
+    "exceljs": "^4.4.0",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.6",
+    "vitest": "^2.1.1",
+    "vue": "^3.5.6"
+  }
+}

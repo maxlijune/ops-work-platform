@@ -1,0 +1,32 @@
+appId: cn.maxlijune.ops-wrk-platform
+productName: DBA运维工作台
+copyright: Copyright © 2026 maxlijune
+directories:
+  output: release
+  buildResources: build
+files:
+  - out/**/*
+  - package.json
+  - plugins/**/*
+extraMetadata:
+  main: out/main/index.js
+# better-sqlite3 是原生模块，需要解压到 asar 外由 Node 直接加载
+asarUnpack:
+  - "**/node_modules/better-sqlite3/**"
+npmRebuild: true
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  artifactName: ${productName}-${version}-setup.exe
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: always
+  shortcutName: DBA运维工作台
+  uninstallDisplayName: DBA运维工作台
+  artifactName: ${productName}-${version}-setup.exe
+# 网络受限或需要通过镜像下载 Electron 二进制的场景
+electronDownload:
+  mirror: https://npmmirror.com/mirrors/electron/
