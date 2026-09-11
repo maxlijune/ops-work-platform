@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DBA 运维工作台 — 风格A · 微信 PC</title>
+<style>
+/* ============ 微信 PC 风格：深灰窄栏 + 浅灰列表栏 + 白色主区，主色微信绿 ============ */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 14px; color: #191919; background: #fff;
+  -webkit-font-smoothing: antialiased;
+}
+.app { display: flex; height: 100vh; }
+
+/* ---- Windows 窗口控制 ---- */
+.win-controls { position: fixed; top: 0; right: 0; display: flex; z-index: 300; }
+.win-controls span {
+  width: 46px; height: 34px; display: flex; align-items: center; justify-content: center;
+  color: #b2b2b2; font-size: 12px; cursor: default; user-select: none;
+}
+.win-controls span:hover { background: #ececec; color: #333; }
+.win-controls .wc-close:hover { background: #fa5151; color: #fff; }
+
+/* ---- 左栏：图标导航 ---- */
+.rail {
+  width: 58px; background: #2e2e2e; flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 14px 0 16px; gap: 6px;
+}
+.rail-logo {
+  width: 36px; height: 36px; border-radius: 9px; margin-bottom: 16px;
+  background: linear-gradient(135deg, #07c160, #05a14e);
+  color: #fff; font-weight: 700; font-size: 15px; letter-spacing: .5px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 8px rgba(7, 193, 96, .35);
+}
+.rail-item {
+  width: 40px; height: 40px; border-radius: 9px; position: relative;
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,.5); cursor: pointer; transition: all .16s ease;
+}
+.rail-item:hover { color: #fff; background: rgba(255,255,255,.08); }
+.rail-item.active { color: #fff; background: rgba(255,255,255,.13); }
+.rail-item.active::before {
+  content: ''; position: absolute; left: -9px; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 18px; border-radius: 2px; background: #07c160;
+}
+.rail-item svg { width: 19px; height: 19px; }
+.rail-badge {
+  position: absolute; top: 5px; right: 5px; min-width: 15px; height: 15px; padding: 0 4px;
+  background: #fa5151; color: #fff; font-size: 10px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; line-height: 1;
+}
+.rail-spacer { flex: 1; }
+
+/* ---- 中栏：搜索 + 快速导航 + 实例分组 ---- */
+.panel {
+  width: 244px; flex-shrink: 0; background: #f7f7f7;
+  border-right: 1px solid #e7e7e7;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.search {
+  margin: 12px 12px 4px; height: 30px; border-radius: 15px; background: #e2e2e2;
+  display: flex; align-items: center; padding: 0 12px; gap: 6px; flex-shrink: 0;
+}
+.search svg { width: 14px; height: 14px; color: #999; flex-shrink: 0; }
+.search input {
+  border: none; outline: none; background: transparent; width: 100%;
+  font-size: 12px; color: #333; font-family: inherit;
+}
+.search input::placeholder { color: #a6a6a6; }
+
+.panel-scroll { flex: 1; overflow-y: auto; padding: 8px 8px 20px; }
+.panel-scroll::-webkit-scrollbar { width: 6px; }
+.panel-scroll::-webkit-scrollbar-thumb { background: #dcdcdc; border-radius: 3px; }
+
+.group-title {
+  font-size: 12px; color: #999; padding: 14px 8px 6px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.group-title .cnt { font-size: 11px; color: #b3b3b3; }
+
+/* 快速导航 */
+.qnav-item {
+  display: flex; align-items: center; gap: 10px; padding: 8px 10px; margin: 1px 0;
+  border-radius: 8px; cursor: pointer; transition: background .14s;
+  font-size: 13px; color: #444;
+}
+.qnav-item:hover { background: #ececec; }
+.qnav-ico { font-size: 15px; width: 18px; text-align: center; flex-shrink: 0; }
+.qnav-type { margin-left: auto; font-size: 10px; color: #b3b3b3; border: 1px solid #e0e0e0; padding: 1px 5px; border-radius: 4px; }
+
+/* 实例列表 */
+.inst {
+  display: flex; align-items: center; gap: 9px; padding: 8px 10px; margin: 1px 0;
+  border-radius: 8px; cursor: pointer; transition: background .14s;
+}
+.inst:hover { background: #ececec; }
+.inst.sel { background: #e0f4e9; }
+.inst .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.inst.online .dot { background: #07c160; box-shadow: 0 0 0 2px rgba(7,193,96,.18); }
+.inst.offline .dot { background: #c9c9c9; }
+.inst.timeout .dot { background: #fa9d3b; box-shadow: 0 0 0 2px rgba(250,157,59,.18); }
+.inst .name { font-size: 13px; color: #333; }
+.inst.offline .name { color: #b3b3b3; }
+.inst .meta { margin-left: auto; font-size: 11px; color: #b3b3b3; }
+
+/* ---- 主区 ---- */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; }
+.page-head {
+  display: flex; align-items: center; padding: 18px 28px 0; flex-shrink: 0;
+}
+.page-head h1 { font-size: 20px; font-weight: 600; color: #1a1a1a; letter-spacing: .2px; }
+.page-sub { font-size: 12px; color: #999; margin-top: 3px; }
+.head-actions { margin-left: auto; display: flex; gap: 10px; }
+
+.btn {
+  border: none; outline: none; cursor: pointer; font-family: inherit;
+  height: 32px; padding: 0 18px; border-radius: 6px; font-size: 13px;
+  transition: all .15s; display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-primary { background: #07c160; color: #fff; }
+.btn-primary:hover { background: #06ad56; }
+.btn-ghost { background: #fff; color: #576b95; border: 1px solid #dcdee2; }
+.btn-ghost:hover { border-color: #c0c4cc; color: #2f343c; }
+
+.main-scroll { flex: 1; overflow-y: auto; padding: 18px 28px 30px; }
+.main-scroll::-webkit-scrollbar { width: 8px; }
+.main-scroll::-webkit-scrollbar-thumb { background: #e4e4e4; border-radius: 4px; }
+
+/* 统计卡片 */
+.stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 20px; }
+.stat {
+  border: 1px solid #ebebeb; border-radius: 10px; padding: 16px 18px;
+  position: relative; overflow: hidden; transition: box-shadow .2s;
+  background: #fff;
+}
+.stat:hover { box-shadow: 0 4px 14px rgba(0,0,0,.06); }
+.stat-num { font-size: 27px; font-weight: 700; line-height: 1.15; color: #1a1a1a; }
+.stat-num small { font-size: 13px; font-weight: 400; color: #999; margin-left: 2px; }
+.stat-label { font-size: 12px; color: #999; margin-top: 4px; }
+.stat .ico { position: absolute; right: 14px; top: 14px; width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.stat.danger .stat-num { color: #fa5151; }
+.stat.warn .stat-num { color: #fa9d3b; }
+.ico.ok { background: #e8f8ef; } .ico.warn { background: #fdf1e3; } .ico.danger { background: #fdecec; } .ico.info { background: #edf2ff; }
+
+/* 看板表格 */
+.board { border: 1px solid #ebebeb; border-radius: 10px; overflow: hidden; }
+.board-head {
+  display: flex; align-items: center; padding: 14px 18px; gap: 8px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.tabs { display: flex; gap: 6px; }
+.tab {
+  font-size: 12.5px; color: #666; padding: 5px 13px; border-radius: 14px;
+  cursor: pointer; transition: all .15s; user-select: none;
+}
+.tab:hover { background: #f5f5f5; }
+.tab.active { background: #e8f8ef; color: #067a45; font-weight: 500; }
+.board-head .legend { margin-left: auto; font-size: 11.5px; color: #b3b3b3; display: flex; gap: 12px; align-items: center; }
+.legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+
+table { width: 100%; border-collapse: collapse; }
+th {
+  text-align: left; font-size: 12px; font-weight: 500; color: #999;
+  padding: 10px 14px; background: #fafafa; border-bottom: 1px solid #f0f0f0;
+  white-space: nowrap;
+}
+td { padding: 11px 14px; border-bottom: 1px solid #f5f5f5; font-size: 13px; vertical-align: middle; }
+tbody tr { transition: background .12s; cursor: default; }
+tbody tr:hover { background: #fafafa; }
+tbody tr:last-child td { border-bottom: none; }
+.mono { font-family: Consolas, "Courier New", monospace; font-size: 12.5px; color: #444; }
+.inst-cell { display: flex; align-items: center; gap: 8px; }
+.inst-tag {
+  font-size: 10px; padding: 1px 6px; border-radius: 4px; font-weight: 500;
+  background: #edf2ff; color: #2f54eb; margin-left: 6px;
+}
+.inst-tag.down { background: #f4f4f5; color: #909399; }
+
+.usage { display: flex; align-items: center; gap: 10px; min-width: 190px; }
+.bar { flex: 1; height: 6px; background: #ececec; border-radius: 3px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; transition: width .6s cubic-bezier(.22,.61,.36,1); }
+.bar-fill.ok { background: #07c160; } .bar-fill.warn { background: #fa9d3b; } .bar-fill.danger { background: #fa5151; }
+.usage .pct { font-size: 12.5px; font-weight: 600; width: 48px; text-align: right; font-variant-numeric: tabular-nums; }
+.usage .pct.ok { color: #067a45; } .usage .pct.warn { color: #c77d1e; } .usage .pct.danger { color: #d64541; }
+
+.status { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; }
+.status i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.status.ok { color: #067a45; } .status.ok i { background: #07c160; }
+.status.warn { color: #c77d1e; } .status.warn i { background: #fa9d3b; }
+.status.danger { color: #d64541; } .status.danger i { background: #fa5151; }
+
+.op-link {
+  font-size: 12.5px; color: #576b95; cursor: pointer; padding: 3px 8px;
+  border-radius: 4px; transition: all .14s; background: none; border: none; font-family: inherit;
+}
+.op-link:hover { background: #edf0f5; }
+.op-link.expand { color: #067a45; font-weight: 500; }
+.op-link.expand:hover { background: #e8f8ef; }
+
+/* ---- 扩容对话框 ---- */
+.mask {
+  position: fixed; inset: 0; background: rgba(0,0,0,.32); z-index: 400;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity .2s;
+}
+.mask.show { opacity: 1; pointer-events: auto; }
+.modal {
+  width: 620px; background: #fff; border-radius: 12px; padding: 26px 28px 22px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.14);
+  transform: translateY(14px) scale(.98); transition: transform .22s cubic-bezier(.22,.61,.36,1);
+}
+.mask.show .modal { transform: translateY(0) scale(1); }
+.modal-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.modal-sub { font-size: 12px; color: #999; margin-bottom: 18px; }
+.form-row { margin-bottom: 14px; }
+.form-row label { display: block; font-size: 12.5px; color: #666; margin-bottom: 6px; }
+.form-row label .hint { color: #067a45; font-size: 11.5px; margin-left: 8px; }
+.form-row input[type=text] {
+  width: 100%; height: 34px; border: 1px solid #dcdee2; border-radius: 6px;
+  padding: 0 12px; font-size: 13px; font-family: Consolas, monospace; color: #333; outline: none;
+  transition: border .15s;
+}
+.form-row input[type=text]:focus { border-color: #07c160; box-shadow: 0 0 0 3px rgba(7,193,96,.12); }
+.size-input { width: 140px !important; }
+.sql-preview {
+  background: #2e2e2e; color: #d4f5e2; border-radius: 8px; padding: 14px 16px;
+  font-family: Consolas, monospace; font-size: 12.5px; line-height: 1.7;
+  white-space: pre-wrap; word-break: break-all;
+}
+.sql-preview .kw { color: #7ee2a8; font-weight: 700; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+.modal-note { font-size: 11.5px; color: #b3b3b3; margin-top: 12px; display: flex; align-items: center; gap: 5px; }
+
+/* ---- 数据文件抽屉 ---- */
+.drawer-mask {
+  position: fixed; inset: 0; background: rgba(0,0,0,.28); z-index: 350;
+  opacity: 0; pointer-events: none; transition: opacity .2s;
+}
+.drawer-mask.show { opacity: 1; pointer-events: auto; }
+.drawer {
+  position: fixed; top: 0; right: 0; bottom: 0; width: 560px; background: #fff; z-index: 351;
+  box-shadow: -8px 0 30px rgba(0,0,0,.1);
+  transform: translateX(100%); transition: transform .26s cubic-bezier(.22,.61,.36,1);
+  display: flex; flex-direction: column;
+}
+.drawer.show { transform: translateX(0); }
+.drawer-head {
+  padding: 20px 24px 14px; border-bottom: 1px solid #f0f0f0;
+  display: flex; align-items: center;
+}
+.drawer-head .t { font-size: 16px; font-weight: 600; }
+.drawer-close {
+  margin-left: auto; width: 28px; height: 28px; border-radius: 6px; display: flex;
+  align-items: center; justify-content: center; cursor: pointer; color: #999; font-size: 16px;
+  transition: all .14s;
+}
+.drawer-close:hover { background: #f5f5f5; color: #333; }
+.drawer-body { flex: 1; overflow-y: auto; padding: 18px 24px; }
+.drawer-sum {
+  display: flex; gap: 12px; margin-bottom: 16px;
+}
+.drawer-sum .chip {
+  flex: 1; background: #f7f7f7; border-radius: 8px; padding: 10px 14px;
+}
+.drawer-sum .chip b { font-size: 16px; display: block; }
+.drawer-sum .chip span { font-size: 11.5px; color: #999; }
+.drawer table th { background: #fff; }
+
+/* ---- 风格徽标 ---- */
+.style-badge {
+  position: fixed; left: 16px; bottom: 16px; z-index: 500;
+  background: rgba(46,46,46,.88); color: #fff; backdrop-filter: blur(4px);
+  font-size: 12px; padding: 7px 14px; border-radius: 16px;
+  display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(0,0,0,.2);
+}
+.style-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: #07c160; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- 左栏 -->
+  <nav class="rail">
+    <div class="rail-logo">DB</div>
+    <div class="rail-item active" title="监控看板">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>
+    </div>
+    <div class="rail-item" title="实例台账">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><circle cx="7" cy="7.5" r="0.6" fill="currentColor"/><circle cx="7" cy="16.5" r="0.6" fill="currentColor"/></svg>
+    </div>
+    <div class="rail-item" title="SQL 模板库">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 6 3 12 8 18"/><polyline points="16 6 21 12 16 18"/></svg>
+    </div>
+    <div class="rail-item" title="分区管理">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 3 22 8 12 13 2 8"/><polyline points="2 13 12 18 22 13"/></svg>
+    </div>
+    <div class="rail-item" title="插件管理">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 11H19V7a2 2 0 0 0-2-2h-4V3.5a2.5 2.5 0 0 0-5 0V5H4a2 2 0 0 0-2 2v3.8h1.5a2.7 2.7 0 0 1 0 5.4H2V20a2 2 0 0 0 2 2h3.8v-1.5a2.7 2.7 0 0 1 5.4 0V22H17a2 2 0 0 0 2-2v-4h1.5a2.5 2.5 0 0 0 0-5z"/></svg>
+    </div>
+    <div class="rail-item" title="操作日志">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="0.8" fill="currentColor"/><circle cx="4" cy="12" r="0.8" fill="currentColor"/><circle cx="4" cy="18" r="0.8" fill="currentColor"/></svg>
+      <span class="rail-badge">3</span>
+    </div>
+    <div class="rail-spacer"></div>
+    <div class="rail-item" title="设置">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+    </div>
+  </nav>
+
+  <!-- 中栏 -->
+  <aside class="panel">
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+      <input placeholder="搜索实例名称 / IP" />
+    </div>
+    <div class="panel-scroll">
+      <div class="group-title">快速导航 <span class="cnt">4 项</span></div>
+      <div class="qnav-item"><span class="qnav-ico">🌐</span>Grafana 监控<span class="qnav-type">URL</span></div>
+      <div class="qnav-item"><span class="qnav-ico">📁</span>运维文档目录<span class="qnav-type">文件夹</span></div>
+      <div class="qnav-item"><span class="qnav-ico">📄</span>巡检手册 v3<span class="qnav-type">文件</span></div>
+      <div class="qnav-item"><span class="qnav-ico">💻</span>Navicat<span class="qnav-type">应用</span></div>
+
+      <div class="group-title">生产环境 <span class="cnt">12</span></div>
+      <div class="inst online sel"><span class="dot"></span><span class="name">ORA-PROD-01</span><span class="meta">2ms</span></div>
+      <div class="inst online"><span class="dot"></span><span class="name">ORA-PROD-02</span><span class="meta">3ms</span></div>
+      <div class="inst offline"><span class="dot"></span><span class="name">ORA-PROD-03</span><span class="meta">离线</span></div>
+      <div class="inst online"><span class="dot"></span><span class="name">MYSQL-PROD-01</span><span class="meta">8ms</span></div>
+
+      <div class="group-title">测试环境 <span class="cnt">8</span></div>
+      <div class="inst online"><span class="dot"></span><span class="name">ORA-TEST-01</span><span class="meta">5ms</span></div>
+      <div class="inst timeout"><span class="dot"></span><span class="name">ORA-TEST-02</span><span class="meta">超时</span></div>
+      <div class="inst online"><span class="dot"></span><span class="name">MYSQL-TEST-01</span><span class="meta">12ms</span></div>
+
+      <div class="group-title">归档环境 <span class="cnt">4</span></div>
+      <div class="inst online"><span class="dot"></span><span class="name">ORA-ARCH-01</span><span class="meta">15ms</span></div>
+    </div>
+  </aside>
+
+  <!-- 主区 -->
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <h1>监控看板</h1>
+        <div class="page-sub">表空间容量 · 最后刷新 14:32:08 · 每 5 分钟自动刷新</div>
+      </div>
+      <div class="head-actions">
+        <button class="btn btn-ghost">手动刷新</button>
+        <button class="btn btn-primary">阈值设置</button>
+      </div>
+    </div>
+
+    <div class="main-scroll">
+      <div class="stats">
+        <div class="stat"><div class="ico info">🗄️</div><div class="stat-num">24</div><div class="stat-label">实例总数</div></div>
+        <div class="stat"><div class="ico ok">✅</div><div class="stat-num">22</div><div class="stat-label">在线实例</div></div>
+        <div class="stat warn"><div class="ico warn">⚠️</div><div class="stat-num">4<small>（黄3 红1）</small></div><div class="stat-label">空间告警</div></div>
+        <div class="stat warn"><div class="ico warn">📊</div><div class="stat-num">8</div><div class="stat-label">分区预警</div></div>
+        <div class="stat"><div class="ico ok">📝</div><div class="stat-num">3</div><div class="stat-label">今日变更</div></div>
+      </div>
+
+      <div class="board">
+        <div class="board-head">
+          <div class="tabs" id="tabs">
+            <span class="tab active" data-f="all">全部 8</span>
+            <span class="tab" data-f="danger">危险 1</span>
+            <span class="tab" data-f="warn">警告 3</span>
+            <span class="tab" data-f="ok">正常 4</span>
+          </div>
+          <div class="legend">
+            <span><i style="background:#07c160"></i>正常 &lt;85%</span>
+            <span><i style="background:#fa9d3b"></i>警告 85~95%</span>
+            <span><i style="background:#fa5151"></i>危险 &gt;95%</span>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr><th>实例</th><th>表空间</th><th>总大小</th><th>已用</th><th style="width:220px">使用率</th><th>状态</th><th>操作</th></tr>
+          </thead>
+          <tbody id="tbody">
+            <tr data-s="warn">
+              <td><div class="inst-cell mono">ORA-PROD-01</div></td>
+              <td class="mono">USERS</td>
+              <td>512 GB</td><td>468.2 GB</td>
+              <td><div class="usage"><div class="bar"><div class="bar-fill warn" style="width:91.4%"></div></div><span class="pct warn">91.4%</span></div></td>
+              <td><span class="status warn"><i></i>警告</span></td>
+              <td><button class="op-link expand" onclick="openExpand()">扩容</button><button class="op-link" onclick="openDrawer()">明细</button></td>
+            </tr>
+            <tr data-s="ok">
+              <td class="mono">ORA-PROD-01</td><td class="mono">SYSAUX</td>
+              <td>128 GB</td><td>103.1 GB</td>
+              <td><div class="usage"><div class="bar"><div class="bar-fill ok" style="width:80.5%"></div></div><span class="pct ok">80.5%</span></div></td>
+              <td><span class="status ok"><i></i>正常</span></td>
+              <td><button class="op-link" onclick="openDrawer()">明细</button></td>
+            </tr>
+            <tr data-s="ok">
+              <td class="mono">ORA-PROD-01</td><td class="mono">UNDOTBS1</td>
+              <td>64 GB</td><td>12.8 GB</td>
+              <td><div class="usage"><div class="bar"><div class="bar-fill ok" style="width:20%"></div></div><span class="pct ok">20.0%</span></div></td>
+              <td><span class="status ok"><i></i>正常</span></td>
+              <td><button class="op-link" onclick="openDrawer()">明细</button></td>
+            </tr>
+            <tr data-s="warn">
+              <td class="mono">ORA-PROD-02</td><td class="mono">USERS</td>
+              <td>256 GB</td><td>219.3 GB</td>
+              <td><div class="usage"><div class="bar"><div class="bar-fill warn" style="width:85.7%"></div></div><span class="pct warn">85.7%</span></div></td>
+              <td><span class="status warn"><i></i>警告</span></td>
+              <td><button class="op-link expand" onclick="openExpand()">扩容</button><button class="op-link" onclick="openDrawer()">明细</button></td>
+            </tr>
+            <tr data-s="danger">
+              <td class="mono">ORA-PROD-02</td><td class="mono">SYSTEM</td>
+              <td>96 GB</td><td>93.0 GB</td>
+              <td><div class="usage"><div class="bar"><div class="bar-fill danger" style="width:96.8%"></div></div><span class="pct danger">96.8%</span></div></td>
+              <td><span class="status danger"><i></i>危险</span></td>
+              <td><button class="op-link expand" onclick="openExpand()">扩容</button><button class="op-link" onclick="openDrawer()">明细</button></td>
+            </tr>
+            <tr data-s="ok">
+              <td class="mono">ORA-TEST-01</td><td class="mono">USERS</td>
+              <td>64 GB</td><td>22.1 GB</td>
+              <td><div class="usage"><div class="bar"><div class="bar-fill ok" style="width:34.5%"></div></div><span class="pct ok">34.5%</span></div></td>
+              <td><span class="status ok"><i></i>正常</span></td>
+              <td><button class="op-link" onclick="openDrawer()">明细</button></td>
+            </tr>
+            <tr data-s="ok">
+              <td><span class="mono">MYSQL-PROD-01</span><span class="inst-tag down">降级</span></td>
+              <td class="mono">innodb_system</td>
+              <td>96 GB</td><td>41.2 GB</td>
+              <td><div class="usage"><div class="bar"><div class="bar-fill ok" style="width:43%"></div></div><span class="pct ok">43.0%</span></div></td>
+              <td><span class="status ok"><i></i>正常</span></td>
+              <td><button class="op-link" onclick="openDrawer()">明细</button></td>
+            </tr>
+            <tr data-s="warn">
+              <td><span class="mono">MYSQL-PROD-01</span><span class="inst-tag down">降级</span></td>
+              <td class="mono">business_ts</td>
+              <td>320 GB</td><td>289.6 GB</td>
+              <td><div class="usage"><div class="bar"><div class="bar-fill warn" style="width:90.5%"></div></div><span class="pct warn">90.5%</span></div></td>
+              <td><span class="status warn"><i></i>警告</span></td>
+              <td><button class="op-link expand" onclick="openExpand()">扩容</button><button class="op-link" onclick="openDrawer()">明细</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- 扩容对话框 -->
+<div class="mask" id="expandModal" onclick="if(event.target===this)closeExpand()">
+  <div class="modal">
+    <div class="modal-title">手动扩容</div>
+    <div class="modal-sub">ORA-PROD-01 · USERS 表空间 · 当前使用率 91.4%</div>
+    <div class="form-row">
+      <label>新数据文件路径<span class="hint">已跟随现有文件命名规则</span></label>
+      <input type="text" value="D:\ORADATA\PROD01\USERS07.DBF" />
+    </div>
+    <div class="form-row">
+      <label>初始大小（GB）</label>
+      <input type="text" class="size-input" value="32" />
+    </div>
+    <div class="form-row">
+      <label>SQL 预览</label>
+      <div class="sql-preview"><span class="kw">ALTER TABLESPACE</span> USERS
+<span class="kw">ADD DATAFILE</span> 'D:\ORADATA\PROD01\USERS07.DBF'
+<span class="kw">SIZE</span> 32G <span class="kw">AUTOEXTEND ON NEXT</span> 512M <span class="kw">MAXSIZE UNLIMITED</span>;</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeExpand()">取消</button>
+      <button class="btn btn-primary" onclick="closeExpand()">确认执行</button>
+    </div>
+    <div class="modal-note">⚠️ 执行前请确认目标路径磁盘剩余空间充足；本次操作将写入操作日志</div>
+  </div>
+</div>
+
+<!-- 数据文件抽屉 -->
+<div class="drawer-mask" id="drawer" onclick="if(event.target===this)closeDrawer()"></div>
+<div class="drawer" id="drawerBody">
+  <div class="drawer-head">
+    <span class="t">数据文件明细</span>
+    <span style="font-size:12px;color:#999;margin-left:10px">ORA-PROD-01 · USERS</span>
+    <span class="drawer-close" onclick="closeDrawer()">✕</span>
+  </div>
+  <div class="drawer-body">
+    <div class="drawer-sum">
+      <div class="chip"><b>6 个</b><span>数据文件</span></div>
+      <div class="chip"><b>384 GB</b><span>总大小</span></div>
+      <div class="chip"><b>468.2 GB</b><span>已用（含自动扩展）</span></div>
+    </div>
+    <table>
+      <thead><tr><th>文件名</th><th>路径</th><th>大小</th><th>自增长</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">USERS01.DBF</td><td class="mono">D:\ORADATA\PROD01\</td><td>32 GB</td><td class="mono">ON NEXT 512M MAX 32G</td></tr>
+        <tr><td class="mono">USERS02.DBF</td><td class="mono">D:\ORADATA\PROD01\</td><td>32 GB</td><td class="mono">ON NEXT 512M MAX 32G</td></tr>
+        <tr><td class="mono">USERS03.DBF</td><td class="mono">D:\ORADATA\PROD01\</td><td>64 GB</td><td class="mono">OFF（固定）</td></tr>
+        <tr><td class="mono">USERS04.DBF</td><td class="mono">E:\ORADATA2\PROD01\</td><td>64 GB</td><td class="mono">ON NEXT 1G MAX 64G</td></tr>
+        <tr><td class="mono">USERS05.DBF</td><td class="mono">E:\ORADATA2\PROD01\</td><td>96 GB</td><td class="mono">ON NEXT 1G MAX 96G</td></tr>
+        <tr><td class="mono">USERS06.DBF</td><td class="mono">E:\ORADATA2\PROD01\</td><td>96 GB</td><td class="mono">ON NEXT 1G MAX 96G</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="win-controls"><span>─</span><span>□</span><span class="wc-close">✕</span></div>
+<div class="style-badge"><span class="dot"></span>风格 A · 微信 PC</div>
+
+<script>
+function openExpand(){ document.getElementById('expandModal').classList.add('show'); }
+function closeExpand(){ document.getElementById('expandModal').classList.remove('show'); }
+function openDrawer(){
+  document.getElementById('drawer').classList.add('show');
+  document.getElementById('drawerBody').classList.add('show');
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('show');
+  document.getElementById('drawerBody').classList.remove('show');
+}
+document.getElementById('tabs').addEventListener('click', function(e){
+  const t = e.target.closest('.tab'); if(!t) return;
+  this.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  const f = t.dataset.f;
+  document.querySelectorAll('#tbody tr').forEach(tr => {
+    tr.style.display = (f === 'all' || tr.dataset.s === f) ? '' : 'none';
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DBA 运维工作台 — UI 风格选型</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: #f0f2f5; min-height: 100vh; padding: 60px 40px; color: #1f2329;
+}
+.wrap { max-width: 1100px; margin: 0 auto; }
+h1 { font-size: 26px; font-weight: 700; text-align: center; }
+.sub { text-align: center; color: #8f969e; font-size: 14px; margin: 12px 0 44px; }
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+.card {
+  background: #fff; border-radius: 14px; overflow: hidden; text-decoration: none;
+  color: inherit; border: 1px solid #e5e7eb; transition: all .2s; display: block;
+}
+.card:hover { transform: translateY(-4px); box-shadow: 0 14px 36px rgba(31,35,41,.13); border-color: transparent; }
+.preview { height: 172px; position: relative; overflow: hidden; }
+.pv-bar { position: absolute; top: 0; left: 0; bottom: 0; width: 22px; }
+.pv-panel { position: absolute; top: 0; left: 22px; bottom: 0; width: 64px; }
+.pv-main { position: absolute; top: 0; left: 86px; right: 0; bottom: 0; padding: 12px 14px; }
+.pv-row { height: 9px; border-radius: 5px; margin-bottom: 7px; }
+.pv-stats { display: flex; gap: 6px; margin-bottom: 12px; }
+.pv-stat { flex: 1; height: 34px; border-radius: 6px; }
+.pv-table { border-radius: 6px; overflow: hidden; }
+.card-body { padding: 18px 20px 20px; }
+.card-body h2 { font-size: 17px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.tag { font-size: 10.5px; font-weight: 500; padding: 2px 8px; border-radius: 10px; }
+.card-body p { font-size: 12.5px; color: #646a73; line-height: 1.7; margin-top: 8px; }
+.traits { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.trait { font-size: 11px; color: #41464f; background: #f2f3f5; padding: 3px 9px; border-radius: 4px; }
+.foot { text-align: center; margin-top: 40px; color: #a0a6ad; font-size: 12.5px; line-height: 2; }
+.foot b { color: #41464f; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>DBA 运维工作台 · UI 风格选型</h1>
+  <p class="sub">三版功能内容完全一致（监控看板 + 快速导航 + 实例分组 + 扩容对话框 + 数据文件明细抽屉），仅视觉风格不同。点击卡片进入全屏预览。</p>
+
+  <div class="cards">
+    <!-- A 微信 -->
+    <a class="card" href="demo-1-wechat.html">
+      <div class="preview" style="background:#fff;">
+        <div class="pv-bar" style="background:#2e2e2e;"></div>
+        <div class="pv-panel" style="background:#f7f7f7;"></div>
+        <div class="pv-main" style="background:#fff;">
+          <div class="pv-stats">
+            <div class="pv-stat" style="background:#f7f7f7;border:1px solid #ebebeb;"></div>
+            <div class="pv-stat" style="background:#f7f7f7;border:1px solid #ebebeb;"></div>
+            <div class="pv-stat" style="background:#f7f7f7;border:1px solid #ebebeb;"></div>
+          </div>
+          <div class="pv-table">
+            <div class="pv-row" style="background:#f5f5f5;width:88%;"></div>
+            <div class="pv-row" style="background:#07c160;width:62%;"></div>
+            <div class="pv-row" style="background:#f5f5f5;width:80%;"></div>
+            <div class="pv-row" style="background:#fa9d3b;width:72%;"></div>
+            <div class="pv-row" style="background:#f5f5f5;width:55%;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <h2>风格 A · 微信 PC <span class="tag" style="background:#e8f8ef;color:#067a45;">扁平极简</span></h2>
+        <p>深灰窄栏 + 浅灰列表栏 + 白色主区；微信绿点缀；细边框、轻阴影，界面安静克制，久看不累。</p>
+        <div class="traits">
+          <span class="trait">微信绿 #07C160</span><span class="trait">三栏经典</span><span class="trait">信息密度适中</span><span class="trait">扁平无花哨</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- B QQ NT -->
+    <a class="card" href="demo-2-qqnt.html">
+      <div class="preview" style="background:#e9eef5;">
+        <div class="pv-bar" style="background:#fff;border-radius:6px;margin:6px 0 6px 6px;width:26px;"></div>
+        <div class="pv-panel" style="background:#fff;border-radius:6px;margin:6px 0;width:66px;"></div>
+        <div class="pv-main" style="background:#fff;border-radius:6px;margin:6px 6px 6px 0;">
+          <div class="pv-stats">
+            <div class="pv-stat" style="background:#f5fafd;border:1px solid #eef3f8;"></div>
+            <div class="pv-stat" style="background:#f5fafd;border:1px solid #eef3f8;"></div>
+            <div class="pv-stat" style="background:#f5fafd;border:1px solid #eef3f8;"></div>
+          </div>
+          <div class="pv-table">
+            <div class="pv-row" style="background:#edf2f7;width:88%;"></div>
+            <div class="pv-row" style="background:linear-gradient(90deg,#38d9a9,#12b886);width:62%;"></div>
+            <div class="pv-row" style="background:#edf2f7;width:80%;"></div>
+            <div class="pv-row" style="background:linear-gradient(90deg,#ffc078,#ff9f43);width:72%;"></div>
+            <div class="pv-row" style="background:#edf2f7;width:55%;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <h2>风格 B · QQ NT <span class="tag" style="background:#e8f6ff;color:#0d8cd9;">年轻明快</span></h2>
+        <p>浮起的大圆角卡片 + 蓝色渐变主色 + 毛玻璃顶栏；留白多、圆角大，观感轻盈现代，交互反馈活泼。</p>
+        <div class="traits">
+          <span class="trait">渐变蓝 #12B7F5</span><span class="trait">大圆角卡片</span><span class="trait">悬浮阴影</span><span class="trait">微动效</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- C 企业微信 -->
+    <a class="card" href="demo-3-wecom.html">
+      <div class="preview" style="background:#f0f2f5;">
+        <div class="pv-bar" style="background:#26292e;"></div>
+        <div class="pv-panel" style="background:#fff;"></div>
+        <div class="pv-main" style="background:#f0f2f5;">
+          <div class="pv-stats">
+            <div class="pv-stat" style="background:#fff;border:1px solid #ebeef2;"></div>
+            <div class="pv-stat" style="background:#fff;border:1px solid #ebeef2;"></div>
+            <div class="pv-stat" style="background:#fff;border:1px solid #ebeef2;"></div>
+          </div>
+          <div class="pv-table" style="background:#fff;border:1px solid #ebeef2;">
+            <div class="pv-row" style="background:#f7f8fa;width:88%;"></div>
+            <div class="pv-row" style="background:#2ea121;width:62%;"></div>
+            <div class="pv-row" style="background:#fafbfc;width:80%;"></div>
+            <div class="pv-row" style="background:#ff8800;width:72%;"></div>
+            <div class="pv-row" style="background:#fafbfc;width:55%;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <h2>风格 C · 企业微信 PC <span class="tag" style="background:#e8f3ff;color:#0082ef;">商务严谨</span></h2>
+        <p>深色左栏 + 商务蓝主色 + 斑马纹表格；小圆角、硬朗线条，办公工具属性强，信息密度最高。</p>
+        <div class="traits">
+          <span class="trait">商务蓝 #0082EF</span><span class="trait">斑马纹表格</span><span class="trait">信息密度高</span><span class="trait">办公稳重</span>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <p class="foot">
+    预览提示：demo 内可点击 <b>「扩容」</b> 查看扩容对话框（跟随现有路径 + SQL 预览），点击 <b>「明细」</b> 查看数据文件抽屉，顶部 Tab 可按状态筛选。<br>
+    选定风格后请告知（如"选 A"或"A 的布局 + C 的配色"），将基于所选风格进入正式开发。
+  </p>
+</div>
+</body>
+</html>
