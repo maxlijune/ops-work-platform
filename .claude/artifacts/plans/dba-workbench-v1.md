@@ -13,7 +13,7 @@
 
 ## Acceptance criteria
 
-继承 spec AC-1 ~ AC-15（见 spec），本 plan 验证段逐条映射。
+继承 spec AC-1 ~ AC-16（见 spec），本 plan 验证段逐条映射。
 
 ## RALPLAN-DR
 
@@ -68,7 +68,7 @@
 4. 插件契约 — `src/main/plugins/contract.ts`：
    `interface DriverPlugin { manifest{id,name,dbType,version}; testConnection(cfg); query(cfg,sql,params,opts); streamQuery(cfg,sql,params,onBatch); getTablespaces(cfg); getDatafiles(cfg,ts); listPartitionedTables(cfg); getPartitionInfo(cfg,table); getPartitionHealth(cfg); generateAddDatafileSql(cfg,ts,opts); executeDdl(cfg,sql) }`，全部 Promise；能力可选字段声明（如 mysql 声明 `capabilities: {tablespace: 'basic', partition: true}`）
 5. 插件加载器 — `src/main/plugins/loader.ts`：扫描双源目录 → 校验 manifest → 动态 import → 接口探测 → 注册 `src/main/plugins/registry.ts`；**单插件失败 try/catch 隔离**，失败原因记入注册表供管理页展示；启停读 `plugin_registry`
-6. Oracle 官方插件 — `plugins/oracle-driver/`（index.js + manifest.json + node_modules）：oracledb thin；表空间 SQL（`dba_data_files`/`dba_free_space` 聚合）、数据文件、`dba_tab_partitions` 分区信息、健康检查（MAXVALUE 分区、未来分区余量 < 阈值清单）、扩容 SQL 生成、DDL 执行
+6. Oracle 官方插件 — `plugins/oracle-driver/`（index.js + manifest.json + node_modules）：oracledb **thick 模式**（11g 与 12c+ 通吃，用户已确认 11g 较多/不确定）；**阶段 1 首日 ABI spike**：在 Electron 主进程验证 oracledb 预编译二进制可加载，不兼容则 electron-rebuild 或捆绑匹配 Electron ABI 的二进制；`initOracleClient({libDir})` 优先读插件设置的本机 Instant Client 路径（DBA 机器常已装），其次插件目录捆绑副本；表空间 SQL（`dba_data_files`/`dba_free_space` 聚合）、数据文件、`dba_tab_partitions` 分区信息、健康检查（MAXVALUE 分区、未来分区余量 < 阈值清单）、扩容 SQL 生成（跟随现有数据文件路径/命名 + 默认大小可改）、DDL 执行
 7. MySQL 官方插件 — `plugins/mysql-driver/`：mysql2/promise；`information_schema.INNODB_TABLESPACES`/`FILES` 表空间（降级：无自增长概念标"不支持"）、`information_schema.PARTITIONS` 分区；`:name` 参数转 `?` 绑定
 8. 插件管理页 — `src/renderer/views/Plugins.vue` + `src/main/plugins/installer.ts`：列表（来源/版本/状态/失败原因）、启停开关、zip 解压安装到 userData/plugins、卸载（仅用户源；内置源只能禁用，保证可恢复）
 
@@ -80,7 +80,7 @@
 **阶段 3：监控看板（V1 最高优先业务模块）**
 
 11. 表空间看板 — `src/renderer/views/Dashboard.vue` + `src/main/ipc/dashboard.ts`：并发限流 4~6 逐实例拉取，超时单实例标灰不阻塞全局；阈值（settings 默认 85/95）黄/红标色
-12. 数据文件明细 + 手动扩容 — `src/renderer/components/DatafileDrawer.vue`、`ExpandDialog.vue`：`generateAddDatafileSql` 生成 → SQL 预览 → 确认 → `executeDdl` → 写 `audit_logs`
+12. 数据文件明细 + 手动扩容 — `src/renderer/components/DatafileDrawer.vue`、`ExpandDialog.vue`：`generateAddDatafileSql` 自动跟随该表空间现有数据文件路径/命名，大小给默认值且可改 → SQL 预览 → 确认 → `executeDdl` → 写 `audit_logs`
 13. 分区信息 + 健康检查 — `src/renderer/views/Partitions.vue`：选实例+表 → 分区列表（行数/大小）；健康检查页签输出预警清单；MySQL 按 capabilities 降级
 
 **阶段 4：SQL 模板与查询导出**
@@ -109,8 +109,7 @@
 
 #### Open questions（留给后续）
 
-- Oracle 11g 占比 → 影响 oracle 插件 thin/thick 策略（**阶段 3 开工前必须确认**）
-- 扩容数据文件的大小/路径规则 → 影响 ExpandDialog 交互（阶段 3 前确认）
+（已闭环 2026-09-11：① 11g 较多/不确定 → oracle 插件 thick 模式 + Instant Client，本机路径优先、捆绑副本兜底，阶段 1 首日 ABI spike；② 扩容规则 → 跟随现有数据文件路径/命名 + 默认大小可改）
 
 ### Architect challenge
 
@@ -157,7 +156,8 @@ A 与 B 并非互斥终点：契约全异步 + 能力声明（capabilities）+ �
 
 | Risk | Mitigation |
 |---|---|
-| Oracle 11g 实例存在，thin 连接失败 | 阶段 3 前向用户确认版本分布；oracle 插件连接失败时错误信息明示"可能为 11g，需 thick 模式"；预留 thick 分支文档 |
+| oracledb thick 预编译二进制与 Electron ABI 不匹配 | 阶段 1 首日 ABI spike 验证；不兼容则 electron-rebuild 或捆绑匹配 Electron 的二进制 |
+| Instant Client 体积（约 80~200MB）推高插件体积 | 插件设置支持指定本机已有 Instant Client 路径（DBA 机器常已装），捆绑副本兜底可后装 |
 | 插件方法未捕获异常拖垮主进程 | loader 对插件每个方法统一 Promise wrap + catch，失败记日志返回结构化错误；插件加载失败隔离（AC-15 验证） |
 | MySQL 表空间字段与 Oracle 不齐 | capabilities 声明 + 看板按能力隐藏列，不显示假空值 |
 | 50 实例看板拉取风暴 | 并发限流 4~6 + 单实例超时（如 10s）标灰，不阻塞全局 |
@@ -172,7 +172,7 @@ A 与 B 并非互斥终点：契约全异步 + 能力声明（capabilities）+ �
 - **单测**：`npx vitest run` — sqlguard（SELECT 放行、WITH 放行、UPDATE/DELETE/INSERT/MERGE/DDL 拦截、多语句拒绝、注释混淆拒绝）+ parseParams（`:name` 提取/去重）+ exporter（小数据 xlsx/csv 内容断言）
 - **开发运行**：`npm run dev` — 阶段 0 起每阶段结束手工冒烟
 - **AC-1/2/15**：插件管理页禁用 mysql → 新建实例无 MySQL 选项、已有 MySQL 实例标"插件禁用"；zip 安装/卸载；改坏某插件 manifest.json 后重启 → 应用正常、管理页标红
-- **AC-3~7**：登记真实 Oracle 测试实例 → 看板使用率 + 阈值标色；扩容走预览→确认→查 audit_logs；数据文件/分区/健康检查逐页核验
+- **AC-3~7、AC-16**：登记真实 Oracle 测试实例（含至少一台 11g 验证 thick 模式；无 11g 环境则用 12c+ 验证并在验收记录标注 11g 待验）→ 看板使用率 + 阈值标色；扩容走预览（跟随现有路径/命名 + 默认大小可改）→确认→查 audit_logs；数据文件/分区/健康检查逐页核验
 - **AC-8~10**：建带 `:date` 模板执行；保存 v2 回退 v1；提交 `UPDATE ...` 被拦
 - **AC-11**：Oracle 执行 `SELECT * FROM dual CONNECT BY level <= 100000` 构造 10 万行 → 导出 xlsx/csv，观察进度条与任务管理器内存（峰值 < 1.5GB）
 - **AC-12**：分组过滤、名称/IP 搜索、连接测试（含一个不可达实例显示失败）
@@ -182,13 +182,13 @@ A 与 B 并非互斥终点：契约全异步 + 能力声明（capabilities）+ �
 
 ## ADR
 
-- **Decision**：Electron 桌面应用（Windows 优先）；数据库能力经**同进程外置目录插件**接入（DriverPlugin 全异步契约 + capabilities 能力声明 + 方法级 wrap 兜底）；v1 内置 oracle(thin)/mysql 两个纯 JS 官方插件，用户区插件支持 zip 安装/卸载；DSG 模块暂缓；新增快速导航模块
+- **Decision**：Electron 桌面应用（Windows 优先）；数据库能力经**同进程外置目录插件**接入（DriverPlugin 全异步契约 + capabilities 能力声明 + 方法级 wrap 兜底）；v1 内置 oracle(thick 模式 + Instant Client，兼容 11g)/mysql 两个官方插件，用户区插件支持 zip 安装/卸载；DSG 模块暂缓；新增快速导航模块
 - **Drivers**：驱动可装卸（决定性）、国产库扩展成本、单人可维护性、使用频率
 - **Alternatives considered**：
-  - Option A 同进程插件 — **chosen**：v1 驱动纯 JS 无隔离刚需，契约异步保留 sidecar 逃生门
+  - Option A 同进程插件 — **chosen**：mysql 纯 JS、oracle thick 经 ABI spike 前置验证，无进程隔离刚需，契约异步保留 sidecar 逃生门
   - Option B Sidecar 子进程 — rejected：500+ 行协议成本在 v1 无受益场景；v2 原生驱动出现时按插件粒度引入 `SidecarAdapter` 即可，无需整体迁移
   - Option C 驱动硬编码 — rejected：违背用户插件化核心诉求
-- **Why chosen**：以最小代码满足"可装卸、减体积、可自管理"核心诉求；纯 JS 驱动使同进程方案的风险面收窄到可控范围；异步契约为 v2 国产库（可能原生/Python）预留了不推翻重来的演进路径
+- **Why chosen**：以最小代码满足"可装卸、减体积、可自管理"核心诉求；mysql 纯 JS 零 ABI 风险，oracle thick 的 ABI 风险以阶段 1 首日 spike 前置消解；异步契约为 v2 国产库（可能原生/Python）预留了不推翻重来的演进路径
 - **Consequences**：正面——插件装卸即类型开关、安装包只带必要驱动、v2 扩展不动核心；负面——同进程无崩溃隔离（靠 wrap 兜底）、原生驱动插件（未来）需单独 sidecar 适配、插件质量依赖 manifest 校验而非签名
 - **Follow-ups**（进 backlog，不在本 plan 实施）：v2 DM8/Vastbase 插件（评估原生 ABI / sidecar）；DSG 模块重启（spec 冻结术语恢复）；插件签名与在线更新机制；执行计划（EXPLAIN）查看
 
@@ -198,3 +198,4 @@ A 与 B 并非互斥终点：契约全异步 + 能力声明（capabilities）+ �
 - Architect challenge v1：steelman 指出同进程崩溃传染风险 → Planner 吸收为"插件方法统一 wrap 兜底"（步骤 5 增强）；确认 3 条 tension 均有取舍依据
 - Critic verdict v1：APPROVED with 3 reservations（11g 风险、MySQL 降级字段级定义、better-sqlite3 ABI）→ 全部合入 Risks & mitigations 与 Verification steps
 - Final iterations: 1 / 3
+- 2026-09-11 补充：两项 open question 闭环（① 11g 较多/不确定 → oracle 插件 thick 模式 + 阶段 1 首日 ABI spike；② 扩容规则 → 跟随现有数据文件 + 默认大小可改），已同步更新步骤 6/12、风险表、AC-16 与 ADR

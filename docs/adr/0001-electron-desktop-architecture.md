@@ -15,4 +15,4 @@ Date: 2026-09-11
 
 - 正面：双击即用的桌面体验，无需浏览器与本地服务端口；SSH 与数据库操作统一在主进程 Node 生态内闭环
 - 负面：安装包体积大（100MB+）；国产库支持推迟到 v2，v1 登记国产库实例需明确提示"暂不支持"
-- 后续约束：v2 国产库适配若选 Python sidecar 将引入双运行时打包复杂度；Oracle 11g 需 oracledb thick 模式并捆绑 Instant Client，用户 Oracle 版本分布需在 dev-plan 前确认
+- 后续约束：v2 国产库适配若选 Python sidecar 将引入双运行时打包复杂度；已确认 11g 占比较多/不确定，oracle 插件采用 oracledb thick 模式 + Instant Client（本机路径优先、捆绑副本兜底），ABI 兼容性以阶段 1 首日 spike 验证

@@ -2,7 +2,7 @@
 
 > Status: ALIGNED
 > Author: DBA 用户（maxlijune）
-> Last updated: 2026-09-11（范围修订 Amendment-1）
+> Last updated: 2026-09-11（Amendment-1；两项 open question 已闭环）
 
 ## Background
 
@@ -25,7 +25,7 @@
 **模块零：插件化驱动框架**
 - DriverPlugin 插件契约（连接测试、查询、流式查询、表空间/数据文件/分区采集、扩容 SQL 生成与执行）
 - 插件管理页：已装插件列表、启用/禁用、从本地 zip 安装、卸载（用户区插件）
-- v1 随安装包内置两个官方插件：Oracle（oracledb thin）、MySQL（mysql2），可禁用
+- v1 随安装包内置两个官方插件：Oracle（oracledb thick，兼容 11g；Instant Client 本机路径优先、捆绑副本兜底）、MySQL（mysql2），可禁用
 - 插件加载失败不影响应用启动与其他插件
 
 **模块一：监控看板**
@@ -65,9 +65,9 @@
 
 - 单账号体系：同一实例查询与维护共用一个账号，查询只读靠 SQL 解析拦截（用户知晓并接受绕过风险）
 - 凭据本地明文或轻混淆存储（用户明确不要求加密）
-- Oracle 插件默认走 oracledb **thin 模式**（纯 JS，支持 Oracle 12.1+）；若存在 11g 实例需切换 thick 模式并捆绑 Instant Client（见 Open questions）
+- Oracle 插件采用 oracledb **thick 模式**（11g 与 12c+ 通吃，用户确认 11g 占比较多/不确定）：Instant Client 优先使用插件设置指定的本机路径（DBA 机器常已安装），未配置时回退插件目录捆绑副本
 - 官方插件随安装包置于 resources（可禁用、保证可恢复）；用户区插件在 userData/plugins，支持 zip 安装与卸载
-- 主要平台 Windows；数据库驱动 v1 仅纯 JS（oracledb thin / mysql2），规避 Electron ABI 问题
+- 主要平台 Windows；mysql2 纯 JS 零 ABI 风险；oracledb thick 依赖预编译二进制，需在阶段 1 首日做 Electron ABI spike 验证（详见 plan 风险表）
 - 技术栈：Electron + Vue 3 + TypeScript + better-sqlite3；UI 组件库 Element Plus（脚手架阶段可更换，非架构决策）
 
 ## Solution（架构草图）
@@ -82,7 +82,7 @@ Electron 桌面应用（Windows 优先）
 │   └─ 插件管理（列表/启停/zip 安装/卸载）
 ├─ 主进程（Node.js）
 │   ├─ 插件框架：契约 + 加载器 + 注册表（内置 resources 与 userData 双来源）
-│   ├─ 官方插件：oracle-driver（oracledb thin）、mysql-driver（mysql2）
+│   ├─ 官方插件：oracle-driver（oracledb thick，兼容 11g）、mysql-driver（mysql2）
 │   ├─ 统一变更管线：生成 SQL → 预览 → 确认 → 执行 → 记日志
 │   ├─ 只读守卫（sqlguard）+ 导出引擎（exceljs 流式 / csv 逐批）
 │   └─ 快速导航执行（shell.openExternal / openPath）
@@ -97,7 +97,8 @@ Electron 桌面应用（Windows 优先）
 | 凭据明文 | 本地单机风险自担；建议至少限制数据文件 OS 权限 |
 | 大结果集 | 十万行导出需流式；结果网格分页/限量加载，禁止一次物化全量 |
 | 插件加载失败 | 单插件 manifest 校验失败/import 异常时隔离捕获，应用与其余插件正常启动，管理页标红展示原因 |
-| Oracle 11g | thin 模式不支持 11g；若占比高需 thick + Instant Client，影响插件体积与分发（Open question） |
+| oracledb thick ABI | thick 预编译二进制与 Electron ABI 可能不匹配 → 阶段 1 首日 spike 验证，不兼容则 electron-rebuild 或捆绑匹配二进制 |
+| Instant Client 体积 | 约 80~200MB 推高插件体积 → 本机路径优先（插件设置指定），捆绑副本兜底可后装 |
 | MySQL 语义差异 | 无 dba_* 视图，表空间/分区信息来自 information_schema，部分能力降级或标"不支持" |
 | 看板拉取风暴 | 50 实例并发拉取需限流（并发 4~6），单实例超时不算失败全局 |
 | 误操作 | DDL 有预览+确认+日志，无二次字符校验防护（用户选择放弃） |
@@ -108,7 +109,7 @@ Electron 桌面应用（Windows 优先）
 - AC-1 禁用 mysql 插件后：新建实例的类型下拉不含 MySQL；已有 MySQL 实例标记"插件禁用"；重新启用后恢复
 - AC-2 插件管理页选择本地 zip 安装 → 解压至用户插件目录 → 列表出现且可正常使用；卸载用户区插件后从列表消失
 - AC-3 登记一个 Oracle 实例后，看板展示其全部表空间使用率，超过 85%/95% 分别标黄/标红（阈值可配置）
-- AC-4 手动扩容：生成 SQL 预览 → 确认后执行成功 → 操作日志新增一条记录（含 SQL、时间、结果）
+- AC-4 手动扩容：自动跟随该表空间现有数据文件路径与命名规则生成新文件，大小给默认值且可修改；SQL 预览 → 确认后执行成功 → 操作日志新增一条记录（含 SQL、时间、结果）
 - AC-5 查看任一表空间的数据文件明细（路径/大小/自增长）
 - AC-6 查询任一分区表的分区列表及各分区行数/大小
 - AC-7 分区健康检查输出"分区即将耗尽"的预警清单
@@ -120,11 +121,11 @@ Electron 桌面应用（Windows 优先）
 - AC-13 快速导航：添加 URL/文件夹/文件/应用四类导航项，点击分别打开浏览器/资源管理器/关联程序/启动应用
 - AC-14 Windows 打包产出 NSIS 安装包，全新 Win10/11 机器安装后上述 AC 全部可复验
 - AC-15 损坏一个插件目录（如改坏 manifest.json）后应用正常启动，插件管理页标红显示该插件加载失败原因
+- AC-16 Oracle 插件以 thick 模式初始化：配置 Instant Client 路径（或使用捆绑副本）后，11g 与 12c+ 实例连接测试均成功；两者均缺失时给出明确的 libDir 配置指引
 
 ## Open questions
 
-- 用户的 Oracle 版本分布（11g 占比）：决定 oracle 插件 thin/thick 模式与 Instant Client 捆绑策略 —— 开发监控看板前需确认
-- 表空间扩容规则：新增数据文件的大小/路径是固定配置还是每次手动指定
+（无。原两项已于 2026-09-11 确认：① 11g 占比较多/不确定 → oracle 插件 thick 模式 + Instant Client；② 扩容规则 → 跟随现有数据文件路径/命名 + 默认大小可改）
 
 ## Core entities (ontology)
 
